@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Mark Puppy as Reunited - Lost and Found Puppy{% endblock %}
+{% block extra_css %}
+<style>
+    form {
+        max-width: 600px;
+        margin: auto;
+    }
+    .form-label {
+        font-weight: 600;
+    }
+    .form-control {
+        border-radius: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: 1px solid #ccc;
+    }
+    button.btn-success {
+        border-radius: 0.5rem;
+        padding: 0.5rem 1.5rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<h2>Mark {{ puppy.name }} as Reunited</h2>
+<form method="post" class="needs-validation" novalidate>
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="mb-3">
+        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+        {{ field|as_widget(attrs={'class': 'form-control', 'placeholder': field.label}) }}
+        {% if field.errors %}
+        <div class="invalid-feedback d-block">
+            {{ field.errors|striptags }}
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-success">Mark as Reunited</button>
+</form>
+{% endblock %}
+
+{# Backend view function for this template #}
+{# 
+@login_required
+def mark_as_reunited(request, puppy_id):
+    puppy = get_object_or_404(Puppy, id=puppy_id, created_by=request.user)
+    
+    if request.method == 'POST':
+        form = ReunionForm(request.POST)
+        if form.is_valid():
+            reunion = form.save(commit=False)
+            reunion.puppy = puppy
+            reunion.owner = request.user
+            reunion.save()
+            
+            puppy.status = 'REUNITED'
+            puppy.save()
+            
+            messages.success(request, f'{puppy.name} has been marked as reunited!')
+            return redirect('dashboard')
+    else:
+        form = ReunionForm()
+    
+    return render(request, 'mark_reunited.html', {
+        'puppy': puppy,
+        'form': form
+    })
+#}

@@ -1,0 +1,338 @@
+{% block extra_js %}
+{% if has_3d_model %}
+<script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.js"></script>
+
+<script>
+    // Enhanced 3D Model Viewer with more realistic dog model and interactive features
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the scene
+        const container = document.getElementById('puppy3dViewer');
+        const width = container.clientWidth;
+        const height = 400;
+        
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xf8f9fa);
+        
+        // Add environment lighting for better visuals
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1);
+        hemiLight.position.set(0, 1, 0);
+        scene.add(hemiLight);
+        
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(1, 1, 1);
+        scene.add(dirLight);
+        
+        // Add soft ambient light
+        const ambientLight = new THREE.AmbientLight(0x404040, 2);
+        scene.add(ambientLight);
+        
+        // Add subtle fog effect
+        scene.fog = new THREE.FogExp2(0xf8f9fa, 0.01);
+        
+        // Initialize camera with better positioning
+        const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+        camera.position.set(0, 0.5, 2);
+        
+        // Initialize renderer with antialiasing
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(width, height);
+        renderer.shadowMap.enabled = true;
+        container.innerHTML = '';
+        container.appendChild(renderer.domElement);
+        
+        // Add orbit controls with damping for smooth movement
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 1;
+        controls.maxDistance = 5;
+        controls.maxPolarAngle = Math.PI * 0.9;
+        
+        // Create a ground plane with subtle shadow
+        const groundGeometry = new THREE.PlaneGeometry(10, 10);
+        const groundMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xdddddd,
+            roughness: 0.8,
+            metalness: 0.2
+        });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.y = -0.5;
+        ground.receiveShadow = true;
+        scene.add(ground);
+        
+        // Add a subtle grid helper
+        const gridHelper = new THREE.GridHelper(10, 10, 0x888888, 0xcccccc);
+        scene.add(gridHelper);
+        
+        // Try to load GLTF model if available, otherwise fallback to parametric model
+        const loader = new THREE.GLTFLoader();
+        const textureLoader = new THREE.TextureLoader();
+        
+        {% if puppy.model_3d %}
+            // Load actual 3D model if available
+            loader.load(
+                '{{ puppy.model_3d.url }}',
+                function(gltf) {
+                    const model = gltf.scene;
+                    
+                    // Scale and position the model
+                    model.scale.set(0.5, 0.5, 0.5);
+                    model.position.y = -0.5;
+                    
+                    // Enable shadows for all meshes in the model
+                    model.traverse(function(node) {
+                        if (node.isMesh) {
+                            node.castShadow = true;
+                            node.receiveShadow = true;
+                        }
+                    });
+                    
+                    scene.add(model);
+                    
+                    // Add animation mixer if animations exist
+                    if (gltf.animations && gltf.animations.length) {
+                        const mixer = new THREE.AnimationMixer(model);
+                        const action = mixer.clipAction(gltf.animations[0]);
+                        action.play();
+                        
+                        // Animation loop
+                        const clock = new THREE.Clock();
+                        function animate() {
+                            requestAnimationFrame(animate);
+                            const delta = clock.getDelta();
+                            mixer.update(delta);
+                            controls.update();
+                            renderer.render(scene, camera);
+                        }
+                        animate();
+                    }
+                },
+                undefined,
+                function(error) {
+                    console.error('Error loading 3D model:', error);
+                    createParametricDogModel();
+                }
+            );
+        {% else %}
+            // Create a parametric dog model as fallback
+            createParametricDogModel();
+        {% endif %}
+        
+        function createParametricDogModel() {
+            // Create a more realistic parametric dog model
+            const dogColor = textureLoader.load('{% if puppy.model_texture %}{{ puppy.model_texture.url }}{% else %}/static/images/dog-texture.jpg{% endif %}');
+            
+            const dogMaterial = new THREE.MeshStandardMaterial({
+                map: dogColor,
+                roughness: 0.7,
+                metalness: 0.1
+            });
+            
+            // Body (ellipsoid)
+            const bodyGeometry = new THREE.SphereGeometry(0.4, 32, 32, 0, Math.PI * 2, 0, Math.PI * 0.6);
+            const body = new THREE.Mesh(bodyGeometry, dogMaterial);
+            body.scale.set(1.5, 0.8, 1);
+            body.position.y = -0.2;
+            body.castShadow = true;
+            scene.add(body);
+            
+            // Head (sphere)
+            const headGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+            const head = new THREE.Mesh(headGeometry, dogMaterial);
+            head.position.set(0, 0.1, 0.6);
+            head.castShadow = true;
+            scene.add(head);
+            
+            // Snout (cylinder)
+            const snoutGeometry = new THREE.CylinderGeometry(0.08, 0.1, 0.3, 32);
+            const snout = new THREE.Mesh(snoutGeometry, dogMaterial);
+            snout.position.set(0, 0.05, 0.8);
+            snout.rotation.x = Math.PI / 2;
+            snout.castShadow = true;
+            scene.add(snout);
+            
+            // Nose (sphere)
+            const noseGeometry = new THREE.SphereGeometry(0.05, 16, 16);
+            const noseMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+            const nose = new THREE.Mesh(noseGeometry, noseMaterial);
+            nose.position.set(0, 0.05, 0.95);
+            scene.add(nose);
+            
+            // Ears (custom shapes)
+            const earGeometry = new THREE.ConeGeometry(0.15, 0.3, 32);
+            earGeometry.translate(0, 0.15, 0);
+            
+            const leftEar = new THREE.Mesh(earGeometry, dogMaterial);
+            leftEar.position.set(-0.2, 0.3, 0.5);
+            leftEar.rotation.z = Math.PI / 6;
+            leftEar.castShadow = true;
+            scene.add(leftEar);
+            
+            const rightEar = new THREE.Mesh(earGeometry, dogMaterial);
+            rightEar.position.set(0.2, 0.3, 0.5);
+            rightEar.rotation.z = -Math.PI / 6;
+            rightEar.castShadow = true;
+            scene.add(rightEar);
+            
+            // Eyes
+            const eyeGeometry = new THREE.SphereGeometry(0.03, 16, 16);
+            const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+            
+            const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            leftEye.position.set(-0.1, 0.15, 0.7);
+            scene.add(leftEye);
+            
+            const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            rightEye.position.set(0.1, 0.15, 0.7);
+            scene.add(rightEye);
+            
+            // Tail (flexible)
+            const tailCurve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(0, -0.1, -0.6),
+                new THREE.Vector3(0, 0, -0.9),
+                new THREE.Vector3(0.2, 0.1, -1.1)
+            ]);
+            
+            const tailGeometry = new THREE.TubeGeometry(tailCurve, 20, 0.03, 8, false);
+            const tail = new THREE.Mesh(tailGeometry, dogMaterial);
+            tail.castShadow = true;
+            scene.add(tail);
+            
+            // Legs (with paws)
+            const legGeometry = new THREE.CylinderGeometry(0.07, 0.07, 0.3, 32);
+            const pawGeometry = new THREE.SphereGeometry(0.08, 16, 16);
+            
+            // Front legs
+            const frontLeftLeg = new THREE.Mesh(legGeometry, dogMaterial);
+            frontLeftLeg.position.set(-0.25, -0.5, 0.3);
+            frontLeftLeg.castShadow = true;
+            scene.add(frontLeftLeg);
+            
+            const frontLeftPaw = new THREE.Mesh(pawGeometry, dogMaterial);
+            frontLeftPaw.position.set(-0.25, -0.65, 0.3);
+            frontLeftPaw.castShadow = true;
+            scene.add(frontLeftPaw);
+            
+            const frontRightLeg = new THREE.Mesh(legGeometry, dogMaterial);
+            frontRightLeg.position.set(0.25, -0.5, 0.3);
+            frontRightLeg.castShadow = true;
+            scene.add(frontRightLeg);
+            
+            const frontRightPaw = new THREE.Mesh(pawGeometry, dogMaterial);
+            frontRightPaw.position.set(0.25, -0.65, 0.3);
+            frontRightPaw.castShadow = true;
+            scene.add(frontRightPaw);
+            
+            // Back legs
+            const backLeftLeg = new THREE.Mesh(legGeometry, dogMaterial);
+            backLeftLeg.position.set(-0.25, -0.5, -0.3);
+            backLeftLeg.castShadow = true;
+            scene.add(backLeftLeg);
+            
+            const backLeftPaw = new THREE.Mesh(pawGeometry, dogMaterial);
+            backLeftPaw.position.set(-0.25, -0.65, -0.3);
+            backLeftPaw.castShadow = true;
+            scene.add(backLeftPaw);
+            
+            const backRightLeg = new THREE.Mesh(legGeometry, dogMaterial);
+            backRightLeg.position.set(0.25, -0.5, -0.3);
+            backRightLeg.castShadow = true;
+            scene.add(backRightLeg);
+            
+            const backRightPaw = new THREE.Mesh(pawGeometry, dogMaterial);
+            backRightPaw.position.set(0.25, -0.65, -0.3);
+            backRightPaw.castShadow = true;
+            scene.add(backRightPaw);
+            
+            // Add wagging tail animation
+            const clock = new THREE.Clock();
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                // Tail wagging animation
+                const time = clock.getElapsedTime();
+                tailCurve.points[2].x = 0.2 * Math.sin(time * 2);
+                tail.geometry.dispose();
+                tail.geometry = new THREE.TubeGeometry(tailCurve, 20, 0.03, 8, false);
+                
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            const width = container.clientWidth;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        });
+        
+        // Add loading indicator
+        const loadingDiv = document.createElement('div');
+        loadingDiv.style.position = 'absolute';
+        loadingDiv.style.top = '50%';
+        loadingDiv.style.left = '50%';
+        loadingDiv.style.transform = 'translate(-50%, -50%)';
+        loadingDiv.style.color = '#333';
+        loadingDiv.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading 3D Model...</span></div>';
+        container.appendChild(loadingDiv);
+        
+        // Remove loading indicator when model is ready
+        setTimeout(() => {
+            container.removeChild(loadingDiv);
+        }, 1500);
+        
+        // Add click-to-focus functionality
+        container.addEventListener('click', function() {
+            controls.autoRotate = !controls.autoRotate;
+        });
+    });
+</script>
+
+<style>
+    #puppy3dViewer {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    #puppy3dViewer:hover {
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .model-controls {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        z-index: 100;
+        display: flex;
+        gap: 5px;
+    }
+    
+    .model-controls button {
+        background: rgba(255, 255, 255, 0.8);
+        border: none;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    
+    .model-controls button:hover {
+        background: white;
+    }
+</style>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,445 @@
+{% extends 'base.html' %}
+{% block title %}Advanced Puppy Search - Lost and Found Puppy{% endblock %}
+{% block extra_css %}
+<style>
+    .search-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        background: #fff;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    .search-container:hover {
+        transform: translateY(-3px);
+    }
+    h2 {
+        color: #4e73df;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        font-weight: 700;
+    }
+    .search-form {
+        margin-bottom: 2rem;
+    }
+    .form-label {
+        font-weight: 600;
+        color: #5a5c69;
+        margin-bottom: 0.5rem;
+    }
+    .form-control {
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        border: 1px solid #d1d3e2;
+        transition: border-color 0.3s;
+    }
+    .form-control:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+    .btn-primary {
+        padding: 0.75rem 2rem;
+        font-size: 1.1rem;
+        border-radius: 0.5rem;
+        background: #4e73df;
+        border: none;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s;
+        width: 100%;
+    }
+    .btn-primary:hover {
+        background: #3a5bc7;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .invalid-feedback {
+        color: #e74a3b;
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+    }
+    .no-results {
+        text-align: center;
+        padding: 2rem;
+        background: #f8f9fc;
+        border-radius: 0.5rem;
+        color: #5a5c69;
+        font-size: 1.1rem;
+    }
+    .table-container {
+        margin-top: 2rem;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: 0 0 15px rgba(0,0,0,0.05);
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th {
+        background: #4e73df;
+        color: white;
+        padding: 1rem;
+        text-align: left;
+    }
+    td {
+        padding: 1rem;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    tr:hover {
+        background-color: #f8f9fc;
+    }
+    .table-responsive {
+        overflow-x: auto;
+    }
+    .search-type-tabs {
+        display: flex;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    .search-type-tab {
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        font-weight: 600;
+        color: #5a5c69;
+        transition: all 0.3s;
+    }
+    .search-type-tab.active {
+        color: #4e73df;
+        border-bottom-color: #4e73df;
+    }
+    .search-type-tab:hover:not(.active) {
+        color: #4e73df;
+        background-color: #f8f9fc;
+    }
+    .breed-suggestions {
+        position: absolute;
+        z-index: 1000;
+        width: 100%;
+        max-height: 200px;
+        overflow-y: auto;
+        background: white;
+        border: 1px solid #d1d3e2;
+        border-radius: 0 0 5px 5px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        display: none;
+    }
+    .breed-suggestion-item {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+    }
+    .breed-suggestion-item:hover {
+        background-color: #f8f9fc;
+    }
+    .search-features {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+    }
+    .feature-card {
+        flex: 1;
+        min-width: 150px;
+        margin: 0.5rem;
+        padding: 1rem;
+        background: #f8f9fc;
+        border-radius: 8px;
+        text-align: center;
+        transition: all 0.3s;
+    }
+    .feature-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .feature-icon {
+        font-size: 1.5rem;
+        color: #4e73df;
+        margin-bottom: 0.5rem;
+    }
+    .feature-text {
+        font-size: 0.9rem;
+        color: #5a5c69;
+    }
+    .status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .status-lost {
+        background-color: #f6c23e;
+        color: #fff;
+    }
+    .status-found {
+        background-color: #1cc88a;
+        color: #fff;
+    }
+    .advanced-search-toggle {
+        color: #4e73df;
+        cursor: pointer;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+        display: inline-block;
+    }
+    .advanced-fields {
+        display: none;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e3e6f0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="search-container">
+    <h2><i class="fas fa-search mr-2"></i>Advanced Puppy Search</h2>
+    
+    <div class="search-features">
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-paw"></i></div>
+            <div class="feature-text">Search across both lost and found puppies</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-dog"></i></div>
+            <div class="feature-text">Smart breed suggestions with images</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-map-marked-alt"></i></div>
+            <div class="feature-text">Location-based search</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-calendar-alt"></i></div>
+            <div class="feature-text">Date range filtering</div>
+        </div>
+    </div>
+    
+    <div class="search-type-tabs">
+        <div class="search-type-tab active" data-type="all">All Puppies</div>
+        <div class="search-type-tab" data-type="lost">Lost Puppies</div>
+        <div class="search-type-tab" data-type="found">Found Puppies</div>
+    </div>
+    
+    <form method="get" action="{% url 'search' %}" class="search-form row g-3 needs-validation" novalidate>
+        <input type="hidden" name="search_type" id="search_type" value="all">
+        
+        {{ form.non_field_errors }}
+        
+        <div class="col-md-3">
+            <label for="{{ form.breed.id_for_label }}" class="form-label">Breed</label>
+            <div class="position-relative">
+                {{ form.breed }}
+                <div class="breed-suggestions" id="breed-suggestions"></div>
+            </div>
+            {% if form.breed.errors %}
+            <div class="invalid-feedback d-block">
+                <i class="fas fa-exclamation-circle mr-1"></i>{{ form.breed.errors|striptags }}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-3">
+            <label for="{{ form.color.id_for_label }}" class="form-label">Color</label>
+            {{ form.color }}
+            {% if form.color.errors %}
+            <div class="invalid-feedback d-block">
+                <i class="fas fa-exclamation-circle mr-1"></i>{{ form.color.errors|striptags }}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-3">
+            <label for="{{ form.location.id_for_label }}" class="form-label">Location</label>
+            {{ form.location }}
+            {% if form.location.errors %}
+            <div class="invalid-feedback d-block">
+                <i class="fas fa-exclamation-circle mr-1"></i>{{ form.location.errors|striptags }}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-3">
+            <label for="{{ form.gender.id_for_label }}" class="form-label">Gender</label>
+            {{ form.gender }}
+            {% if form.gender.errors %}
+            <div class="invalid-feedback d-block">
+                <i class="fas fa-exclamation-circle mr-1"></i>{{ form.gender.errors|striptags }}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-12">
+            <span class="advanced-search-toggle" id="toggle-advanced">
+                <i class="fas fa-plus-circle mr-1"></i>Advanced Search Options
+            </span>
+            <div class="advanced-fields row g-3" id="advanced-fields">
+                <div class="col-md-3">
+                    <label for="{{ form.min_age.id_for_label }}" class="form-label">Min Age (months)</label>
+                    {{ form.min_age }}
+                </div>
+                <div class="col-md-3">
+                    <label for="{{ form.max_age.id_for_label }}" class="form-label">Max Age (months)</label>
+                    {{ form.max_age }}
+                </div>
+                <div class="col-md-3">
+                    <label for="{{ form.date_lost_from.id_for_label }}" class="form-label">Date From</label>
+                    {{ form.date_lost_from }}
+                </div>
+                <div class="col-md-3">
+                    <label for="{{ form.date_lost_to.id_for_label }}" class="form-label">Date To</label>
+                    {{ form.date_lost_to }}
+                </div>
+                <div class="col-md-6">
+                    <label for="{{ form.has_microchip.id_for_label }}" class="form-label">Microchip</label>
+                    {{ form.has_microchip }}
+                </div>
+                <div class="col-md-6">
+                    <label for="{{ form.has_collar.id_for_label }}" class="form-label">Collar</label>
+                    {{ form.has_collar }}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 align-self-end">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search mr-2"></i>Search
+            </button>
+        </div>
+    </form>
+
+    {% if puppy_table %}
+        <div class="table-container">
+            <div class="table-responsive">
+                {% load django_tables2 %}
+                {% render_table puppy_table %}
+            </div>
+        </div>
+    {% else %}
+        <div class="no-results">
+            <i class="fas fa-paw fa-3x mb-3" style="color: #dddfeb;"></i>
+            <p class="mb-0">No puppies found matching your search criteria.</p>
+            <p>Try adjusting your search filters or expanding your search range.</p>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Popular dog breeds for suggestions
+        const dogBreeds = [
+            'Labrador Retriever', 'German Shepherd', 'Golden Retriever', 'French Bulldog', 
+            'Bulldog', 'Poodle', 'Beagle', 'Rottweiler', 'Yorkshire Terrier', 'Boxer',
+            'Dachshund', 'Siberian Husky', 'Great Dane', 'Pomeranian', 'Chihuahua',
+            'Shih Tzu', 'Boston Terrier', 'Pug', 'Border Collie', 'Australian Shepherd',
+            'Cocker Spaniel', 'Shetland Sheepdog', 'Bernese Mountain Dog', 'Bichon Frise',
+            'Cavalier King Charles Spaniel', 'Maltese', 'Doberman Pinscher', 'Shiba Inu',
+            'Pembroke Welsh Corgi', 'Basset Hound', 'Saint Bernard', 'Bull Terrier',
+            'English Springer Spaniel', 'Miniature Schnauzer', 'Weimaraner', 'Collie'
+        ];
+        
+        // Search type tabs functionality
+        const tabs = document.querySelectorAll('.search-type-tab');
+        const searchTypeInput = document.getElementById('search_type');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                tabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                searchTypeInput.value = this.dataset.type;
+            });
+        });
+        
+        // Breed suggestions functionality
+        const breedInput = document.getElementById('{{ form.breed.id_for_label }}');
+        const breedSuggestions = document.getElementById('breed-suggestions');
+        
+        breedInput.addEventListener('input', function() {
+            const input = this.value.toLowerCase();
+            if (input.length < 2) {
+                breedSuggestions.style.display = 'none';
+                return;
+            }
+            
+            const matches = dogBreeds.filter(breed => 
+                breed.toLowerCase().includes(input)
+            );
+            
+            if (matches.length > 0) {
+                breedSuggestions.innerHTML = matches.map(breed => 
+                    `<div class="breed-suggestion-item">${breed}</div>`
+                ).join('');
+                breedSuggestions.style.display = 'block';
+            } else {
+                breedSuggestions.style.display = 'none';
+            }
+        });
+        
+        breedSuggestions.addEventListener('click', function(e) {
+            if (e.target.classList.contains('breed-suggestion-item')) {
+                breedInput.value = e.target.textContent;
+                breedSuggestions.style.display = 'none';
+            }
+        });
+        
+        document.addEventListener('click', function(e) {
+            if (e.target !== breedInput) {
+                breedSuggestions.style.display = 'none';
+            }
+        });
+        
+        // Advanced search toggle
+        const toggleAdvanced = document.getElementById('toggle-advanced');
+        const advancedFields = document.getElementById('advanced-fields');
+        
+        toggleAdvanced.addEventListener('click', function() {
+            if (advancedFields.style.display === 'none' || !advancedFields.style.display) {
+                advancedFields.style.display = 'block';
+                this.innerHTML = '<i class="fas fa-minus-circle mr-1"></i>Hide Advanced Options';
+            } else {
+                advancedFields.style.display = 'none';
+                this.innerHTML = '<i class="fas fa-plus-circle mr-1"></i>Advanced Search Options';
+            }
+        });
+        
+        // Date picker initialization (if you're using a date picker library)
+        if (typeof $.fn.datepicker !== 'undefined') {
+            $('#{{ form.date_lost_from.id_for_label }}').datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true
+            });
+            $('#{{ form.date_lost_to.id_for_label }}').datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true
+            });
+        }
+        
+        // Add animation to search button
+        const searchBtn = document.querySelector('.btn-primary');
+        if (searchBtn) {
+            searchBtn.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-3px)';
+                this.style.boxShadow = '0 6px 12px rgba(0,0,0,0.15)';
+            });
+            
+            searchBtn.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+            });
+        }
+        
+        // Add hover effect to table rows
+        const tableRows = document.querySelectorAll('tbody tr');
+        tableRows.forEach(row => {
+            row.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = '#f8f9fc';
+                this.style.transition = 'background-color 0.2s ease';
+            });
+            
+            row.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = '';
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,462 @@
+{% extends 'base.html' %}
+{% block title %}Report Found Puppy - Lost and Found Puppy{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        min-height: 100vh;
+        padding: 60px 0;
+    }
+    
+    .report-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    
+    .report-header {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .report-header::before {
+        content: '';
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 150px;
+        height: 150px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .report-header h2 {
+        font-weight: 800;
+        margin-bottom: 10px;
+        position: relative;
+    }
+    
+    .report-header p {
+        opacity: 0.9;
+        font-size: 1.1rem;
+    }
+    
+    .report-body {
+        padding: 40px;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .form-label .required {
+        color: #dc3545;
+        margin-left: 4px;
+    }
+    
+    .form-control {
+        border-radius: 10px;
+        padding: 12px 16px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s;
+    }
+    
+    .form-control:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
+    }
+    
+    .invalid-feedback {
+        font-size: 0.85rem;
+        margin-top: 6px;
+    }
+    
+    .btn-submit {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 12px 30px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        color: white;
+        transition: all 0.3s;
+        width: 100%;
+        margin-top: 20px;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 7px 14px rgba(30, 126, 52, 0.3);
+    }
+    
+    .form-icon {
+        margin-right: 10px;
+        color: #28a745;
+    }
+    
+    .image-upload-container {
+        border: 2px dashed #dee2e6;
+        border-radius: 10px;
+        padding: 30px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-bottom: 20px;
+    }
+    
+    .image-upload-container:hover {
+        border-color: #28a745;
+        background: rgba(40, 167, 69, 0.05);
+    }
+    
+    .image-upload-icon {
+        font-size: 2.5rem;
+        color: #adb5bd;
+        margin-bottom: 15px;
+    }
+    
+    .image-preview {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 8px;
+        margin-top: 15px;
+        display: none;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .report-body {
+            padding: 30px 20px;
+        }
+        
+        .report-header {
+            padding: 25px 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="report-section">
+    <div class="container">
+        <div class="report-card">
+            <div class="report-header">
+                <h2><i class="fas fa-home me-2"></i>Report Found Puppy</h2>
+                <p>Help us reunite this puppy with their family by providing these details</p>
+            </div>
+            
+            <div class="report-body">
+                <form method="post" action="{% url 'report_found' %}" enctype="multipart/form-data" id="foundPuppyForm">
+                    {% csrf_token %}
+                    
+                    <!-- Puppy Details -->
+                    <div class="mb-4">
+                        <h5 class="mb-4" style="color: #1e7e34;"><i class="fas fa-paw me-2"></i>Puppy Information</h5>
+                        
+                        <!-- Name -->
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">
+                                <i class="fas fa-tag form-icon"></i>{{ form.name.label }}
+                                {% if form.name.field.required %}<span class="required">*</span>{% endif %}
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.name.errors|striptags }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Breed -->
+                        <div class="mb-3">
+                            <label for="{{ form.breed.id_for_label }}" class="form-label">
+                                <i class="fas fa-dna form-icon"></i>{{ form.breed.label }}
+                                {% if form.breed.field.required %}<span class="required">*</span>{% endif %}
+                            </label>
+                            {{ form.breed }}
+                            {% if form.breed.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.breed.errors|striptags }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Age -->
+                        <div class="mb-3">
+                            <label for="{{ form.age.id_for_label }}" class="form-label">
+                                <i class="fas fa-birthday-cake form-icon"></i>{{ form.age.label }}
+                                {% if form.age.field.required %}<span class="required">*</span>{% endif %}
+                            </label>
+                            {{ form.age }}
+                            {% if form.age.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.age.errors|striptags }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Color -->
+                        <div class="mb-3">
+                            <label for="{{ form.color.id_for_label }}" class="form-label">
+                                <i class="fas fa-palette form-icon"></i>{{ form.color.label }}
+                                {% if form.color.field.required %}<span class="required">*</span>{% endif %}
+                            </label>
+                            {{ form.color }}
+                            {% if form.color.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.color.errors|striptags }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Distinctive Features -->
+                        <div class="mb-3">
+                            <label for="{{ form.distinctive_features.id_for_label }}" class="form-label">
+                                <i class="fas fa-info-circle form-icon"></i>{{ form.distinctive_features.label }}
+                            </label>
+                            {{ form.distinctive_features }}
+                            <small class="text-muted">(e.g., scars, collar color, special markings)</small>
+                            {% if form.distinctive_features.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.distinctive_features.errors|striptags }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Image Upload -->
+                    <div class="mb-4">
+                        <h5 class="mb-4" style="color: #1e7e34;"><i class="fas fa-camera me-2"></i>Upload Photos</h5>
+                        
+                        <label class="form-label">
+                            <i class="fas fa-image form-icon"></i>Puppy Photo
+                            {% if form.image.field.required %}<span class="required">*</span>{% endif %}
+                        </label>
+                        
+                        <div class="image-upload-container" id="imageUploadContainer">
+                            <div class="image-upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <p class="mb-2">Drag & drop puppy photos here</p>
+                            <p class="text-muted small">or click to browse files</p>
+                            {{ form.image }}
+                            <img id="imagePreview" class="image-preview" alt="Preview">
+                        </div>
+                        {% if form.image.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.image.errors|striptags }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Last Seen Details -->
+                    <div class="mb-4">
+                        <h5 class="mb-4" style="color: #1e7e34;"><i class="fas fa-map-marked-alt me-2"></i>Last Seen Details</h5>
+                        
+                        <!-- Date Found -->
+                        <div class="mb-3">
+                            <label for="{{ form.date_found.id_for_label }}" class="form-label">
+                                <i class="far fa-calendar-alt form-icon"></i>{{ form.date_found.label }}
+                                {% if form.date_found.field.required %}<span class="required">*</span>{% endif %}
+                            </label>
+                            {{ form.date_found }}
+                            {% if form.date_found.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.date_found.errors|striptags }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Location -->
+                        <div class="mb-3">
+                            <label for="{{ form.last_seen_location.id_for_label }}" class="form-label">
+                                <i class="fas fa-map-marker-alt form-icon"></i>{{ form.last_seen_location.label }}
+                                {% if form.last_seen_location.field.required %}<span class="required">*</span>{% endif %}
+                            </label>
+                            {{ form.last_seen_location }}
+                            <small class="text-muted">(Street address, park name, or intersection)</small>
+                            {% if form.last_seen_location.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.last_seen_location.errors|striptags }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Contact Information -->
+                    <div class="mb-4">
+                        <h5 class="mb-4" style="color: #1e7e34;"><i class="fas fa-user me-2"></i>Your Contact Information</h5>
+                        
+                        <!-- Contact Name -->
+                        <div class="mb-3">
+                            <label for="{{ form.contact_name.id_for_label }}" class="form-label">
+                                <i class="fas fa-user-circle form-icon"></i>{{ form.contact_name.label }}
+                                {% if form.contact_name.field.required %}<span class="required">*</span>{% endif %}
+                            </label>
+                            {{ form.contact_name }}
+                            {% if form.contact_name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.contact_name.errors|striptags }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Contact Phone -->
+                        <div class="mb-3">
+                            <label for="{{ form.contact_phone.id_for_label }}" class="form-label">
+                                <i class="fas fa-phone form-icon"></i>{{ form.contact_phone.label }}
+                                {% if form.contact_phone.field.required %}<span class="required">*</span>{% endif %}
+                            </label>
+                            {{ form.contact_phone }}
+                            {% if form.contact_phone.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.contact_phone.errors|striptags }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Contact Email -->
+                        <div class="mb-3">
+                            <label for="{{ form.contact_email.id_for_label }}" class="form-label">
+                                <i class="fas fa-envelope form-icon"></i>{{ form.contact_email.label }}
+                                {% if form.contact_email.field.required %}<span class="required">*</span>{% endif %}
+                            </label>
+                            {{ form.contact_email }}
+                            {% if form.contact_email.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.contact_email.errors|striptags }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Notes -->
+                    <div class="mb-4">
+                        <h5 class="mb-4" style="color: #1e7e34;"><i class="fas fa-edit me-2"></i>Additional Information</h5>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.additional_notes.id_for_label }}" class="form-label">
+                                <i class="fas fa-sticky-note form-icon"></i>{{ form.additional_notes.label }}
+                            </label>
+                            {{ form.additional_notes }}
+                            <small class="text-muted">(Any other information that might help find this puppy)</small>
+                            {% if form.additional_notes.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.additional_notes.errors|striptags }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-submit">
+                        <i class="fas fa-paper-plane me-2"></i>Submit Found Puppy Report
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Image upload preview
+        const imageUpload = document.querySelector('input[type="file"]');
+        const imagePreview = document.getElementById('imagePreview');
+        const imageUploadContainer = document.getElementById('imageUploadContainer');
+        
+        imageUpload.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    imagePreview.src = event.target.result;
+                    imagePreview.style.display = 'block';
+                    
+                    // Update container appearance
+                    imageUploadContainer.style.borderColor = '#28a745';
+                    imageUploadContainer.style.backgroundColor = 'rgba(40, 167, 69, 0.05)';
+                    
+                    // Hide upload prompt
+                    const promptElements = imageUploadContainer.querySelectorAll('p, .image-upload-icon');
+                    promptElements.forEach(el => el.style.display = 'none');
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Drag and drop functionality
+        imageUploadContainer.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#28a745';
+            this.style.backgroundColor = 'rgba(40, 167, 69, 0.1)';
+        });
+        
+        imageUploadContainer.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#dee2e6';
+            this.style.backgroundColor = '';
+        });
+        
+        imageUploadContainer.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#28a745';
+            this.style.backgroundColor = 'rgba(40, 167, 69, 0.05)';
+            
+            if (e.dataTransfer.files.length) {
+                imageUpload.files = e.dataTransfer.files;
+                const event = new Event('change');
+                imageUpload.dispatchEvent(event);
+            }
+        });
+        
+        // Initialize date picker (if using flatpickr or similar)
+        if (typeof flatpickr !== 'undefined') {
+            flatpickr('#id_date_found', {
+                dateFormat: 'Y-m-d',
+                maxDate: 'today'
+            });
+        }
+        
+        // Simple form validation
+        const form = document.getElementById('foundPuppyForm');
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            
+            // Check required fields
+            document.querySelectorAll('[required]').forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                // Scroll to first invalid field
+                const firstInvalid = document.querySelector('.is-invalid');
+                if (firstInvalid) {
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
